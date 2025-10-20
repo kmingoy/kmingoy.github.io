@@ -15,21 +15,24 @@
 
     <section>
       <img src="images/A3-gif.gif" /> 
-      <p> 
+      <p> For my A3 circuit operation, the photoresistor acts as a variable resistor that changes resistance based on light levels. 
+      When the photoresistor is exposed to more light, its resistance decreases, causing the blue LED to brighten and the red LED to dim.
       </p>
     </section>
 
     <section>
       <h2>Schematic</h2>
       <img src="images/A3-schematic.jpg" /> 
-      <p> 
+      <p> To achieve the desired behavior, the variable resistor was used as R1 in the circuit. I then used a 10k resistor for R2 to create a voltage divider with the photoresistor. 
+        This setup allows the analog input to read varying voltage levels based on the resistance of the photoresistor, which in turn controls the brightness of the LEDs.
       </p>
     </section>
 
      <section>
       <h2>Circuit</h2>
       <img src="images/A3-circuit.jpg" /> 
-      <p> 
+      <p> The physical circuit ensures that all components are properly connected as per the schematic.
+      </p> 
     </section>
 
     <section>
@@ -136,13 +139,21 @@ void loop() {
 
     </section>
       <h2>Questions</h2>
-      <p> 1. 
-      </p>
-      <img src="images/A2-Q1.jpg" /> 
+      <p> 1. For my circuit specifically, I needed the variable resistor to be R1 in order to get the desired outcome; 
+        when the photoresistor is uncovered, less resistance, the blue LED becomes brighter, 
+        and when it is covered, more resistance, the red LED dims.
+        <img src="images/A3-q1.jpg" /> 
+      </p> 2. 
+        <img src="images/A3-q2.jpg" /> 
+      <p> 3. With analogWrite() and analogRead() being respctively 8-bit and 10-bit values, 
+        a map function would look like this: map(0, 1023, 0, 255). If it is increased to 10-bit and 
+        16-bit values, it would look like this: map(0, 1023, 0, 65535). That would then lead my map function in my code 
+        to be map(sensorValue, sensorMin, sensorMax, 1023). I would still be calibrating the min and 
+        max sensor values the same way, but the brightness values would be higher resolution, allowing smoother
+        LED transitions. 
+      </p> 
       <p>
-      </p>
-      <p>
-      </p>
+      </p> 
       <p>
       </p>
   </body>
