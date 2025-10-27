@@ -22,16 +22,15 @@
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
           allowfullscreen>
       </iframe>
-      <p> For my A3 circuit operation, the photoresistor acts as a variable resistor that changes resistance based on light levels. 
-      When the photoresistor is exposed to more light, its resistance decreases, causing the blue LED to brighten and the red LED to dim.
+      <p> For my A4 circuit operation, I used the IRremote and Servo libraries to control a servo motor using an infrared remote.
       </p>
     </section>
 
     <section>
       <h2>Schematic</h2>
       <img src="images/A4-schematic.png" /> 
-      <p> To achieve the desired behavior, the variable resistor was used as R1 in the circuit. I then used a 10k resistor for R2 to create a voltage divider with the photoresistor. 
-        This setup allows the analog input to read varying voltage levels based on the resistance of the photoresistor, which in turn controls the brightness of the LEDs.
+      <p> The schematic for this circuit shows how the components are connected. The IR receiver is connected to pin 11, 
+        and the servo motor's control pin is connected to pin 9.
       </p>
     </section>
 
@@ -45,8 +44,8 @@
     <section>
       <h2>Code Snippet - Circuit Operation</h2>
       <pre><code>
-#include <IRremote.h> //intializing IRremote library
-#include <Servo.h> //intializing Servo library 
+#include IRremote.h //intializing IRremote library
+#include Servo.h //intializing Servo library 
 
 int RECV_PIN = 11; //sets IR receiver signal pin
 int servoPin = 9; //sets servo control pin
@@ -85,14 +84,15 @@ void loop() {
   }
 }
       </code></pre>
-      <p> 
+      <p> This code receives and decodes IR signals from the remote an checks if the UP or DOWN buttons are pressed.
+        Depending on which button is pressed, the servo motor moves up or down by 10 degrees, with limits set to prevent over-rotation.
       </p>
     </section>
 
     <section>
       <h2>Code Snippet - Getting Remote Values</h2>
       <pre><code>
-#include <IRremote.h> //initializing IRremote library
+#include IRremote.h //initializing IRremote library
 
 int RECV_PIN = 11; //sets IR receiver signal pin 
 
@@ -110,28 +110,50 @@ void loop() {
   }
 }
       </code></pre>
-      <p> 
+      <p> This code receives and decodes IR signals from the remote, printing out the raw data value in hexadecimal format
+        whenever a button is pressed.
       </p>
     </section>
 
     </section>
       <h2>Questions</h2>
-      <p> 1. For my circuit specifically, I needed the variable resistor to be R1 in order to get the desired outcome; 
-        when the photoresistor is uncovered, less resistance, the blue LED becomes brighter, 
-        and when it is covered, more resistance, the red LED dims.
-        <img src="images/A3-q1.jpg" /> 
-      </p> 2. 
-        <img src="images/A3-q2.jpg" /> 
-      <p> 3. With analogWrite() and analogRead() being respctively 8-bit and 10-bit values, 
-        a map function would look like this: map(0, 1023, 0, 255). If it is increased to 10-bit and 
-        16-bit values, it would look like this: map(0, 1023, 0, 65535). That would then lead my map function in my code 
-        to be map(sensorValue, sensorMin, sensorMax, 1023). I would still be calibrating the min and 
-        max sensor values the same way, but the brightness values would be higher resolution, allowing smoother
-        LED transitions. 
+      <p> 1.
+        <img src="images/A4-q1.jpg" /> 
+        As the servo angle increaes, the width of the pulse also increases while the time between pulses remains constant.
       </p> 
-      <p>
-      </p> 
-      <p>
+      <p> 2.
+        <pre><code>
+//callibrate an intial series to average input device readings
+sum = 0 //store readings value
+numReadings = n //set series length
+
+for loop through n readings //looping through readings
+reading = input //store reading
+sum = total //add up total readings
+
+avg = sum / n //calculate average
+
+then use avg as baseline for constraining input values
+        </code></pre>
       </p>
+      <p> 3.
+        <pre><code>
+//set a continuous range of input values to get average from fluctuating device input readings
+sum = 0 //store readings value
+numReadings = n //set series length
+readings[] //array to store readings
+
+while taking device readings //continuous reading loop
+add new reading to readings[] //store new reading in array
+if readings[] > numReadings //check if array is full
+remove oldest reading from readings[] //remove oldest reading
+avg = sum of readings[] / numReadings //calculate average
+
+use avg as baseline for constraining input values
+        </code></pre>
+      </p> 
+      <p> 4. Yes, I used ChatGPT to help me understand how to get remote values using the IRremote library. I asked specifically
+        about what functions were needed to receive and decode IR signals. 
+      </p> 
   </body>
 </html>
