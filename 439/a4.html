@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+
+    <title>A4: Libraries - Kristian Mingoy</title>
+
+    <link href="style.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <header>
+      <h1>A4: Libraries - Documentation</h1>
+    </header>
+
+    <section>
+      <iframe 
+          width="100%" height="500" 
+          src="https://www.youtube.com/embed/n8qhSHS_2Ow?si=tIKbj-KLWM1WIjEC"
+          title="A3 Circuit Operation Video" 
+          frameborder="0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+      </iframe>
+      <p> For my A3 circuit operation, the photoresistor acts as a variable resistor that changes resistance based on light levels. 
+      When the photoresistor is exposed to more light, its resistance decreases, causing the blue LED to brighten and the red LED to dim.
+      </p>
+    </section>
+
+    <section>
+      <h2>Schematic</h2>
+      <img src="images/A4-schematic.png" /> 
+      <p> To achieve the desired behavior, the variable resistor was used as R1 in the circuit. I then used a 10k resistor for R2 to create a voltage divider with the photoresistor. 
+        This setup allows the analog input to read varying voltage levels based on the resistance of the photoresistor, which in turn controls the brightness of the LEDs.
+      </p>
+    </section>
+
+     <section>
+      <h2>Circuit</h2>
+      <img src="images/A4-circuit.jpg" /> 
+      <p> The physical circuit ensures that all components are properly connected as per the schematic.
+      </p> 
+    </section>
+
+    <section>
+      <h2>Code Snippet - Circuit Operation</h2>
+      <pre><code>
+#include <IRremote.h> //intializing IRremote library
+#include <Servo.h> //intializing Servo library 
+
+int RECV_PIN = 11; //sets IR receiver signal pin
+int servoPin = 9; //sets servo control pin
+Servo myservo; //intializing server object
+
+int pos = 90; //sets servo initial position
+
+void setup() {
+  Serial.begin(9600); //establishes serial communication
+  IrReceiver.begin(RECV_PIN, ENABLE_LED_FEEDBACK); //starts IR receiver on respective pin and enables LED feedback
+  myservo.attach(servoPin); //sets servo object to respective pin
+  myservo.write(pos); //moves servo to initial set position 
+  Serial.println("Press arrow UP or DOWN button to move servo"); //prints out instruction message
+}
+
+void loop() {
+  if (IrReceiver.decode()) { //checks to see if IR signal is received 
+    unsigned long code = IrReceiver.decodedIRData.decodedRawData; //stores received code 
+
+    if (code == 0xF807FF00) { //checks if the received code matches the UP button
+      pos += 10; //if it matches, moves servo up by 10 degrees 
+      if (pos > 180) pos = 180; //checks if it reached servo max angle and prevents it
+      myservo.write(pos); //moves servo to new position
+      Serial.println("UP"); //prints out movement confirmation
+      delay(300); //delay to prevent spam
+    } 
+    else if (code == 0xF609FF00) { //checks if the received code matches the UP button
+      pos -= 10; //if it matches, moves servo down by 10 degrees 
+      if (pos < 0) pos = 0; //checks if it reached servo min angle and prevents it
+      myservo.write(pos); //moves servo to new position
+      Serial.println("DOWN"); //prints out movement confirmation
+      delay(300); //delay to prevent spam
+    }
+
+    IrReceiver.resume(); //prepares for next signal
+  }
+}
+      </code></pre>
+      <p> 
+      </p>
+    </section>
+
+    <section>
+      <h2>Code Snippet - Getting Remote Values</h2>
+      <pre><code>
+#include <IRremote.h> //initializing IRremote library
+
+int RECV_PIN = 11; //sets IR receiver signal pin 
+
+void setup() {
+  Serial.begin(9600); //establishes serial communication
+  IrReceiver.begin(RECV_PIN, ENABLE_LED_FEEDBACK); //starts IR receiver on respective pin and enables LED feedback
+  Serial.println("Ready to receive IR signals..."); //prints out instruction message 
+}
+
+void loop() {
+  if (IrReceiver.decode()) { //checks if IR signal has been received
+    Serial.print("Button pressed: "); //prints out IR signal value
+    Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX); //prints out IR signal value
+    IrReceiver.resume(); //prepares for next signal
+  }
+}
+      </code></pre>
+      <p> 
+      </p>
+    </section>
+
+    </section>
+      <h2>Questions</h2>
+      <p> 1. For my circuit specifically, I needed the variable resistor to be R1 in order to get the desired outcome; 
+        when the photoresistor is uncovered, less resistance, the blue LED becomes brighter, 
+        and when it is covered, more resistance, the red LED dims.
+        <img src="images/A3-q1.jpg" /> 
+      </p> 2. 
+        <img src="images/A3-q2.jpg" /> 
+      <p> 3. With analogWrite() and analogRead() being respctively 8-bit and 10-bit values, 
+        a map function would look like this: map(0, 1023, 0, 255). If it is increased to 10-bit and 
+        16-bit values, it would look like this: map(0, 1023, 0, 65535). That would then lead my map function in my code 
+        to be map(sensorValue, sensorMin, sensorMax, 1023). I would still be calibrating the min and 
+        max sensor values the same way, but the brightness values would be higher resolution, allowing smoother
+        LED transitions. 
+      </p> 
+      <p>
+      </p> 
+      <p>
+      </p>
+  </body>
+</html>
