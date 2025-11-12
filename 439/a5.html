@@ -103,6 +103,28 @@ void loop() {
         <img src="images/A5-q2.png" /> 
       </p> 
       <p> 3. 
+        <img src="images/A5-q3.png" /> 
+        <pre><code>
+first i would intialize the the two motors to respective pins 
+motor-a: in1 = pin 3, in2 = pin 4
+motor-b: in3 = pin 5, in4 = pin 6
+
+then, to move both forward:
+in1 = HIGH, in2 = LOW
+in3 = HIGH, in4 = LOW
+
+to move both backward:
+in1 = LOW, in2 = HIGH
+in3 = LOW, in4 = HIGH
+
+one forward, one backward:
+in1 = HIGH, in2 = LOW
+in3 = LOW, in4 = HIGH
+
+one backward, one forward:
+in1 = LOW, in2 = HIGH
+in3 = HIGH, in4 = LOW
+        </code></pre>
       </p> 
   </body>
 </html>
