@@ -14,31 +14,32 @@
     </header>
 
     <section>
-      <!-- <iframe 
+      <iframe 
           width="100%" height="500" 
-          src="https://www.youtube.com/embed/n8qhSHS_2Ow?si=tIKbj-KLWM1WIjEC"
-          title="A3 Circuit Operation Video" 
+          src="https://www.youtube.com/embed/Nb1RAJsGRRk?si=NeYlsZ3cSNXomPKc"
+          title="A5 Circuit Operation Video" 
           frameborder="0" 
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
           allowfullscreen>
-      </iframe> -->
-      <p> For my A5 circuit operation, I have not yet tested it due to Arduino complications.
+      </iframe>
+      <p> For my A5 circuit, I used a transistor to control an LED with PWM signals from an Arduino and an 
+        IR receiver, while the LED is powered separately by a 9V supply.
       </p>
     </section>
 
     <section>
       <h2>Schematic</h2>
-      <img src="images/A5-schematic.jpg" /> 
-      <p> The schematic for this circuit shows how the components are connected. The MOSFET transistor is used to control 
-        the power supplied to the LED strip load. Additionally there is gate resistor and a pull-down resistor to ensure
-        proper operation of the MOSFET. The ultrasonic sensor is connected to pins 2 and 3 for trig and echo respectively.
+      <img src="images/A5-schematic2.png" /> 
+      <p> The schematic for this circuit shows how the components are connected. The transistor is used to control 
+        the power supplied to the LED load. A gate resistor is included to limit the current from the Arduino pin, and a series resistor is 
+        placed with the LED to limit the current through it. The IR receiver is connected to pin 11 for signal input, with its power and 
+        ground connected to the Arduino.
       </p>
     </section>
 
      <section>
       <h2>Circuit</h2>
-      <img src="images/a5-circuit3.jpg" /> 
-      <img src="images/a5-circuit4.jpg" /> 
+      <img src="images/a5-circuit.jpg" /> 
       <p> The physical circuit ensures that all components are properly connected as per the schematic.
       </p> 
     </section>
@@ -46,35 +47,50 @@
     <section>
       <h2>Code Snippet - Circuit Operation</h2>
       <pre><code>
-#include <NewPing.h> //initalize ultrasonic sensor library
+#include <IRremote.h> //intialize IRremote library
 
-#define TRIG_PIN 2  //set ultrasonic trig pin
-#define ECHO_PIN 3 //set ultrasonic echo pin
-#define MAX_DISTANCE 100 //max distance (cm)
-#define LED_PIN 9 //LED output pin controlled by MO
+#define IR_RECEIVE_PIN 11 //set IR receiver output pin
+#define LED_GATE_PIN 9 //set LED conencted to transistor pin
 
-NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE); //create NewPing object
+int brightness = 128; //set beginning brightness
+bool ledOn = true; //set LED state
 
 void setup() {
-  pinMode(LED_PIN, OUTPUT); //set MOSFET gate output
-  Serial.begin(9600); //begin serial comms 
+  Serial.begin(9600); //start serial communication
+  IrReceiver.begin(IR_RECEIVE_PIN); //start IR receiver
+  pinMode(LED_GATE_PIN, OUTPUT); //set transistor gate pin as OUTPUT
+  analogWrite(LED_GATE_PIN, brightness); //set initial LED brightness
+  Serial.println("IR-LED Ready"); //state readiness
 }
 
 void loop() {
-  delay(50); //small delay between readings
-  unsigned int distance = sonar.ping_cm(); // get distance in cm
-  Serial.println(distance); //print distance
+  if (IrReceiver.decode()) { //check IR receiver signla
+    unsigned long code = IrReceiver.decodedIRData.decodedRawData; //store the received IR code
+    Serial.println(code, HEX); //print IR code
 
-  if (distance > 0 && distance < 199) { //check measured distance
-    int brightness = map(distance, 0, 100, 255, 0); //map distance, closer → brighter
-    analogWrite(LED_PIN, brightness); //adjust brightness
-  } else {
-    analogWrite(LED_PIN, 0); //turn off if out of range
+    switch (code) { //IR codes
+      case 0xBA45FF00: //power button
+        ledOn = !ledOn; //turn LED on/off
+        analogWrite(LED_GATE_PIN, ledOn ? brightness : 0); //apply PWM based on LED state
+        break;
+
+      case 0xF609FF00: //brightness up button
+        brightness = min(255, brightness + 25); //increase brightness
+        analogWrite(LED_GATE_PIN, brightness); //apply new brightness to transistor gate
+        break;
+
+      case 0xF807FF00: //brightness down button
+        brightness = max(0, brightness - 25); //decrease brightness
+        analogWrite(LED_GATE_PIN, brightness); //apply new brightness to transistor gate
+        break;
+    }
+
+    IrReceiver.resume(); //prepare IR receiver for next signal
   }
 }
       </code></pre>
-      <p> This code receives and decodes the ultrasonic sensor data to determine the distance to an object.
-        It then maps that distance to a brightness level for the LED strip, controlling it via the MOSFET transistor.
+      <p> This code uses the IRremote library to read signals from an IR remote. It controls the brightness of an LED connected via a transistor. 
+        The power button toggles the LED on and off, while the brightness up and down buttons adjust the brightness
       </p>
     </section>
 
