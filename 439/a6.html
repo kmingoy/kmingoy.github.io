@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+
+    <title>A6: Talking to the Web! - Kristian Mingoy</title>
+
+    <link href="style.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <header>
+      <h1>A6: Talking to the Web! - Documentation</h1>
+    </header>
+
+    <section>
+      <iframe 
+          width="100%" height="500" 
+          src="https://www.youtube.com/embed/qzXFS5D4vMI?si=B8V3EkSQwJDgwsor"
+          title="A6 Circuit Operation Video" 
+          frameborder="0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+      </iframe>
+      <p> For my A6 circuit, I used an Arduino to send data to p5.js running on my computer via serial communication.
+        I used a joystick to control the position of a brush on the p5 canvas and had a RGB LED on the Arduino that corresponded
+        to the color of the brush on the canvas.
+      </p>
+    </section>
+
+    <section>
+      <h2>Schematic</h2>
+      <img src="images/A6-schematic.png" /> 
+      <p> The schematic for this circuit shows how the components are connected. The transistor is used to control 
+        the power supplied to the LED load. A gate resistor is included to limit the current from the Arduino pin, and a series resistor is 
+        placed with the LED to limit the current through it. The IR receiver is connected to pin 11 for signal input, with its power and 
+        ground connected to the Arduino.
+      </p>
+    </section>
+
+     <section>
+      <h2>Circuit</h2>
+      <img src="images/a6-circuit.jpg" /> 
+      <p> The physical circuit ensures that all components are properly connected as per the schematic.
+      </p> 
+    </section>
+
+    <section>
+      <h2>Code Snippet - Arduino Code</h2>
+      <pre><code>
+#define joyX A0 //sets joyX pin
+#define joyY A1 //sets joyY pin
+#define redLED 9 //sets red LED pin
+#define greenLED 10 //sets green LED pin
+#define blueLED 11 //sets blue LED pin
+
+int brushColor = 1; //sets intial brush color (1-red, 2-green, 3-blue)
+
+void setup() {
+  pinMode(joyX, INPUT); //initalizes joyX as input
+  pinMode(joyY, INPUT); //initialzies joyY as input
+
+  pinMode(redLED, OUTPUT); //initializes red LED as output
+  pinMode(greenLED, OUTPUT); //intializes green LED as output
+  pinMode(blueLED, OUTPUT); //intializes blue LED as output 
+
+  Serial.begin(9600); //starts serial communication 
+  setLEDColor(brushColor); //sets brush color 
+  Serial.print("COLOR:"); Serial.println(brushColor); //state initial color
+}
+
+void loop() {
+  int joystickX = analogRead(joyX); //reads joyX current position 
+  int joystickY = analogRead(joyY); //reds joyY current position
+
+  Serial.print(joystickX); //print joyX position
+  Serial.print(","); 
+  Serial.println(joystickY); //print joyY position 
+
+  if (Serial.available() > 0) { //checks p5 communication to Arduino
+    String command = Serial.readStringUntil('\n'); //takes in command
+    command.trim(); //trims any whitespace
+
+    if (command == "COLOR") { //checks if command corresponds to COLOR 
+      brushColor++; //increments brushColor, moves to next color
+      if (brushColor > 3) brushColor = 1; //if at the end, resets to starting color 
+      setLEDColor(brushColor); //sets LED color
+      Serial.print("COLOR:"); Serial.println(brushColor); //end current color to p5.js
+    }
+  }
+
+  delay(50); //delay
+}
+
+void setLEDColor(int color) { //function
+  switch(color) {
+    case 1: analogWrite(redLED,255); analogWrite(greenLED,0); analogWrite(blueLED,0); break; //sets LED to red
+    case 2: analogWrite(redLED,0); analogWrite(greenLED,255); analogWrite(blueLED,0); break; //sets LED to green
+    case 3: analogWrite(redLED,0); analogWrite(greenLED,0); analogWrite(blueLED,255); break; //sets LED to blue
+  }
+}
+      </code></pre>
+      <p> This code uses analog inputs to read the joystick position and sends the X and Y values via serial to p5.js.
+        It also listens for a "COLOR" command from p5.js to cycle through brush colors, updating the RGB LED accordingly.
+      </p>
+    </section>
+
+    <section>
+      <h2>Code Snippet - p5 Code</h2>
+      <pre><code>
+const BAUD_RATE = 9600; //starts serial communication
+const strokeSize = 20; //sets brush stroke size
+const speedFactor = 0.1; //sets brush movement speed
+
+let port; //sets webserial port
+let connectBtn; //connects Arduino 
+
+let joystickX = 512; //initial joystick X position
+let joystickY = 512; //initial joystick Y position
+let prevX, prevY; //previous brush positions
+
+let brushColor = [255, 0, 0]; //sets initial brush color to red
+
+function setup() {
+  createCanvas(windowWidth, windowHeight); //creates canvas the size of the window
+  background(255); //white background
+
+  prevX = map(joystickX, 0, 1023, 0, width); //maps joystick X to canvas width
+  prevY = map(joystickY, 0, 1023, 0, height); //maps joystick Y to canvas height
+
+  setupSerial(); //initializes webserial
+}
+
+function draw() {
+  if (!checkPort()) return; //checks if arduino is connected
+
+  let str = port.readUntil("\n"); //reads data from Arduino until newline
+  if (str.length == 0) return; //if no data, exit draw loop
+
+  str = str.trim(); //remove whitespace
+
+  if (str.includes("COLOR:")) { //if data is color command
+    const c = Number(str.split(":")[1]); //get color code
+    switch(c) { 
+      case 1: brushColor = [255, 0, 0]; break; //set brush color to red
+      case 2: brushColor = [0, 255, 0]; break; //set brush color to green
+      case 3: brushColor = [0, 0, 255]; break; //set brush color to blue
+    }
+  }
+  else {
+    let arr = str.split(","); //split joystick data
+    if (arr.length >= 2) { //if we have both X and Y
+      joystickX = Number(arr[0]); //update joystick X
+      joystickY = Number(arr[1]); //update joystick Y
+    }
+  }
+
+  const targetX = map(joystickX, 0, 1023, 0, width); //map joystick X to canvas width
+  const targetY = map(joystickY, 0, 1023, 0, height); //map joystick Y to canvas height
+
+  const x = lerp(prevX, targetX, speedFactor); //smooth brush movement
+  const y = lerp(prevY, targetY, speedFactor); //smooth brush movement
+
+  stroke(...brushColor); //set brush color
+  strokeWeight(strokeSize); //set brush stroke size
+  line(prevX, prevY, x, y); //draw line from previous to current position
+
+  prevX = x; //update previous X
+  prevY = y; //update previous Y
+}
+
+function setupSerial() { //initialize webserial
+  port = createSerial(); //create serial port
+  let usedPorts = usedSerialPorts(); //get previously used ports
+  if (usedPorts.length > 0) port.open(usedPorts[0], BAUD_RATE); //open first used port
+
+  connectBtn = createButton("Connect to Arduino"); //create connect button
+  connectBtn.position(5, 5); //position button
+  connectBtn.mouseClicked(onConnectButtonClicked); //set button click handler
+}
+
+function checkPort() { //check if Arduino is connected
+  if (!port.opened()) { //if not connected
+    connectBtn.html("Connect to Arduino"); //update button text
+    return false; //not connected
+  } else { //if connected
+    connectBtn.html("Disconnect"); //update button text
+    return true; //connected
+  }
+}
+
+function onConnectButtonClicked() { //handle connect button click
+  if (!port.opened()) port.open(BAUD_RATE); //if not open, open it
+  else port.close(); //if open, close it
+}
+
+function keyPressed() { //handle key presses
+  if (key === 'c' || key === 'C') port.write("COLOR\n"); //send color change command to Arduino
+}
+      </code></pre>
+      <p> This p5.js code establishes serial communication with the Arduino to receive joystick position data and send color change commands.
+        It maps the joystick values to canvas coordinates to control brush movement and changes brush color based on Arduino signals.
+      </p>
+    </section>    
+  </body>
+</html>
